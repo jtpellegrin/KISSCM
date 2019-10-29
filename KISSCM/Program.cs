@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Linq;
 
 namespace KISS
 {
@@ -7,18 +6,14 @@ namespace KISS
     {
         static int Main(string[] args)
         {
-            var largs = new List<string>();
-            if (args.Length > 0)
-                largs.AddRange(args);
-            else
-                largs.Add("/f:kissprops.xml");
-            
-            ArgumentHelper.processProps(largs);
-            bool ReturnSuccess = ArgumentHelper.processScripts(largs);
-            if (ReturnSuccess)
-                return 0;
-            else
-                return 400;
+            //dotnet .\KISSCM.dll /f:Kissprops.xml
+
+            if (args.Length == 0)
+            {
+                args = new [] {"kissprops.xml"};
+            }
+
+            return ArgumentHelper.ProcessScripts(args[0]) ? 0 : 400;
         }
     }
 }

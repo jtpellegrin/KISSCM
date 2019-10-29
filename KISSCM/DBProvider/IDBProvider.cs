@@ -8,8 +8,7 @@ namespace KISS.DBProvider
 {
     public interface IDBProvider
     {
-        int VersionNo();
-        void ExecuteScriptAndUpdateVersionTable(int versionNo, FileInfo fi);
+        void ExecuteScriptAndUpdateVersionTable(FileInfo fi);
         string GetVersionTableSchema();
     }
 }

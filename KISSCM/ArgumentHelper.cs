@@ -10,57 +10,35 @@ namespace KISS
 {
     public class ArgumentHelper
     {
-        public static void processProps(List<string> largs)
+        /// <summary>
+        /// Process all scripts that have not been successfully run.
+        /// </summary>
+        /// <param name="kissPropsFile">kissprops.xml configuration file location plus filename</param>
+        /// <returns></returns>
+        public static bool ProcessScripts(string kissPropsFile)
         {
-            string props = largs.FirstOrDefault(x => x.Contains("/props:"));
-            if (!String.IsNullOrEmpty(props))
+            Properties properties = new Properties();
+            XmlSerializer s = new XmlSerializer(properties.GetType());
+
+            using (TextReader r = new StreamReader(kissPropsFile))
             {
-                string filename = props.Replace(@"/props:", "");
-                if (string.IsNullOrEmpty(filename))
-                    filename = "KISSprops.xml";
+                properties = (Properties) s.Deserialize(r);
 
-                Properties properties = new Properties();
-                properties.ConnectionString = "Put Conn String here";
-                properties.Provider = "SQLServer";
-                properties.Verbose = true;
-                properties.VersionTable = "VersionTableNameHere";
-                properties.VersionScriptsFolder = @"C:\dev\KISS";
-
-
-                StringWriter Output = new StringWriter(new StringBuilder());
-                string Ret = "";
-
-                XmlSerializer s = new XmlSerializer(properties.GetType());
-                s.Serialize(Output, properties);
-                Ret = Output.ToString();
-                File.WriteAllText(filename, Ret);
-            }
-
-            
-        }
-
-        public static bool processScripts(List<string> largs)
-        {
-            bool success = true;
-            string file = largs.FirstOrDefault(x => x.Contains("/f:"));
-            if (!String.IsNullOrEmpty(file))
-            {
-                string filename = file.Replace(@"/f:", "");
-                Properties properties = new Properties();
-                XmlSerializer s = new XmlSerializer(properties.GetType());
-                TextReader r = new StreamReader(filename);
-                properties = (Properties)s.Deserialize(r);
-                if (!properties.VersionScriptsFolder.Contains(":") || !properties.VersionScriptsFolder.Contains(@"\\") )
+                //We just want to process files recursively at the base level, in the included kissprops.xml file we use the "Scripts" folder
+                if (!properties.VersionScriptsFolder.Contains(":") 
+                    || !properties.VersionScriptsFolder.Contains(@"\\"))
                 {
-                   var settingPath = Path.GetDirectoryName(filename);
-                   properties.VersionScriptsFolder = Path.Combine(settingPath, properties.VersionScriptsFolder);
+                    var settingPath = Path.GetDirectoryName(kissPropsFile);
+                    properties.VersionScriptsFolder = Path.Combine(settingPath, properties.VersionScriptsFolder);
                 }
-                r.Dispose();
-                success =  UpdateDB.Process(properties);
-                if(properties.Wait)
-                    Console.Read();
             }
 
+            bool success =  UpdateDB.Process(properties);
+            if (properties.Wait)
+            {
+                Console.Read();
+            }
+            
             return success;
         }
 
