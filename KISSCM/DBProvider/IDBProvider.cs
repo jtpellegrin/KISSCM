@@ -10,5 +10,6 @@ namespace KISS.DBProvider
     {
         void ExecuteScriptAndUpdateVersionTable(FileInfo fi);
         string GetVersionTableSchema();
+        void CheckForKissTables();
     }
 }

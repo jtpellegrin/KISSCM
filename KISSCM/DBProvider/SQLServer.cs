@@ -81,6 +81,30 @@ namespace KISS.DBProvider
             }
         }
 
+        public void CheckForKissTables()
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(_props.ConnectionString))
+                {
+                    SqlCommand cmd = new SqlCommand($"SELECT MAX(Id) FROM {_props.VersionTable}");
+                    cmd.Connection = conn;
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+            catch
+            {
+                using (SqlConnection conn = new SqlConnection(_props.ConnectionString))
+                {
+                    SqlCommand cmd = new SqlCommand(GetVersionTableSchema());
+                    cmd.Connection = conn;
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
         public string GetVersionTableSchema()
         {
             return $"CREATE TABLE {_props.VersionTable}(" +

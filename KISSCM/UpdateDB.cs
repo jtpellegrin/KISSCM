@@ -22,6 +22,8 @@ namespace KISS
                     throw new Exception("Invalid DB Provider Provided, Excepted Providers are MSQL");
             }
    
+            provider.CheckForKissTables();
+
             //All files that end in .sql
             DirectoryInfo directory =  new DirectoryInfo(props.VersionScriptsFolder);
             FileInfo[] files = directory.GetFiles("*.sql", new EnumerationOptions
