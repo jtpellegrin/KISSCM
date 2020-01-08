@@ -16,6 +16,7 @@ namespace KISS
         public string ScriptSymbol { get; set; }
         public string VersionTable { get; set; }
         public string VersionScriptsFolder { get; set; }
+        public string ScriptsFolderFullPath { get; set; }
         public string Encoding { get; set; }
     }
 }

@@ -8,8 +8,13 @@ namespace KISS.DBProvider
 {
     public interface IDBProvider
     {
-        void ExecuteScriptAndUpdateVersionTable(FileInfo fi);
-        string GetVersionTableSchema();
-        void CheckForKissTables();
+        bool BeginTransaction();
+        bool HasAlreadyRan(string fileName);
+        bool ExecuteScriptAndUpdateVersionTable(string scriptText, string fileName);
+        bool CommitTransaction();
+        bool RollbackTransaction();
+        bool UpdateMigrationLog(string sql, string fileName);
+        bool CheckForKissTables();
+        bool CreateTableSchema();
     }
 }

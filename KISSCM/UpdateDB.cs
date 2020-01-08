@@ -10,6 +10,9 @@ namespace KISS
     {
         public static bool Process(Properties props)
         {
+            Console.WriteLine("Enter Process KissProps.VersionScriptsFolder: {0}", props.VersionScriptsFolder);
+            Console.WriteLine("Enter Process KissProps.ScriptsFolderFullPath: {0}", props.ScriptsFolderFullPath);
+
             bool success = true;
             IDBProvider provider;
 
@@ -21,39 +24,58 @@ namespace KISS
                 default:
                     throw new Exception("Invalid DB Provider Provided, Excepted Providers are MSQL");
             }
-   
-            provider.CheckForKissTables();
+
+            if (!provider.CheckForKissTables())
+            {
+                provider.CreateTableSchema();
+            }
 
             //All files that end in .sql
-            DirectoryInfo directory =  new DirectoryInfo(props.VersionScriptsFolder);
+            DirectoryInfo directory =  new DirectoryInfo(props.ScriptsFolderFullPath);
             FileInfo[] files = directory.GetFiles("*.sql", new EnumerationOptions
             {
                 RecurseSubdirectories = true
             });
 
-            List<FileInfo> goodFiles = new List<FileInfo>();
-            
-            int scriptNo;
-            //ignore any file that does not have a number
-            foreach (FileInfo file in files)
-            {
-                if (file.Name.Length > 1 && file.Name.Contains("-") && int.TryParse(file.Name.Substring(0, file.Name.IndexOf("-")), out scriptNo))
-                {
-                    goodFiles.Add(file);
-                }
-            }
+            Console.WriteLine("Begin Transaction");
+            success = provider.BeginTransaction();
 
             //Take all the files that match our naming convention an process any that havent been processed yet
-            foreach (FileInfo file in goodFiles)
+            foreach (FileInfo file in files)
             {
-                if (props.Verbose)
-                {
-                    Console.WriteLine("Executing the Script File: {0}", file.FullName);
-                }
-                    
                 try
                 {
-                    provider.ExecuteScriptAndUpdateVersionTable(file);
+                    string fileName = file.FullName.Substring(file.FullName.IndexOf(props.VersionScriptsFolder, StringComparison.CurrentCultureIgnoreCase));
+                    string scriptText = string.Empty;
+
+                    if (!provider.HasAlreadyRan(fileName))
+                    {
+                        Console.WriteLine("Executing the Script File: {0}", fileName);
+
+                        if (string.IsNullOrWhiteSpace(props.Encoding))
+                        {
+                            scriptText = File.ReadAllText(file.FullName);
+                        }
+                        else
+                        {
+                            scriptText = File.ReadAllText(file.FullName, ArgumentHelper.GetEncoding(props.Encoding));
+                        }
+
+                        if (success)
+                        {
+                            success = provider.ExecuteScriptAndUpdateVersionTable(scriptText, fileName);
+
+                            if (success)
+                            {
+                                success = provider.UpdateMigrationLog(scriptText, fileName);
+                            }
+                        }
+
+                        if (!success)
+                        {
+                            break;
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -70,11 +92,17 @@ namespace KISS
                 }
             }
 
-            if (goodFiles.Count == 0 && props.Verbose)
+            if (success)
             {
-                Console.WriteLine("There are no new DataBase scripts to execute");
+                Console.WriteLine("Committing transaction");
+                provider.CommitTransaction();
             }
-   
+            else
+            {
+                Console.WriteLine("Rollback transaction");
+                provider.RollbackTransaction();
+            }
+
             return success;
         }
     }

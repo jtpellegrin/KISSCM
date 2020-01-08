@@ -29,7 +29,7 @@ namespace KISS
                     || !properties.VersionScriptsFolder.Contains(@"\\"))
                 {
                     var settingPath = Path.GetDirectoryName(kissPropsFile);
-                    properties.VersionScriptsFolder = Path.Combine(settingPath, properties.VersionScriptsFolder);
+                    properties.ScriptsFolderFullPath = Path.Combine(settingPath, properties.VersionScriptsFolder);
                 }
             }
 
